@@ -303,7 +303,7 @@ impl Decoder for AsCodec {
     type Error = Error;
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<AsDatum>> {
-        trace!("Decode: {:?}", buf);
+        // trace!("Decode: {:?}", buf);
         loop {
             match self.state {
                 CodecState::Len if buf.len() < mem::size_of::<u64>() => {
@@ -356,7 +356,7 @@ impl Encoder for AsCodec {
                 io::Error::new(io::ErrorKind::Other, serialize_err)
             })?;
 
-        trace!("Encoded buffer: {:?}", buf);
+        // trace!("Encoded buffer: {:?}", buf);
         Ok(())
     }
 }

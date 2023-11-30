@@ -74,8 +74,8 @@ fn handle_conn(
     let estimate_throughput = ticks.for_each(move |_| {
         // in each tick, measure bandwidth
         goodput.update(1000).expect(&errmsg);
-        throughput.update(1000).expect(&errmsg);;
-        latency_mon.update().expect(&errmsg);;
+        throughput.update(1000).expect(&errmsg);
+        latency_mon.update().expect(&errmsg);
         info!(
             "client {}\tgoodput {} kbps\tthroughput {} kbps\tlatency {:.3} ms\taccuracy {:.4}",
             addr,
@@ -93,7 +93,7 @@ fn handle_conn(
     let process_connection = transport_read
         .for_each(move |as_datum| {
             let size = as_datum.len() as usize;
-            reporter.throughput.add(size).expect(&errmsg);;
+            reporter.throughput.add(size).expect(&errmsg);
             match as_datum.datum_type() {
                 AsDatumType::Live(level, frame_num) => {
                     let size = as_datum.len() as usize;
@@ -208,9 +208,9 @@ impl<T: Sink<SinkItem = AsDatum, SinkError = Error>> Reporter<T> {
         let ideal = net_delay + tx_delay;
 
         let expected = match ideal as u64 {
-            0...100 => 10.0 * ideal,
-            100...200 => 7.0 * ideal,
-            200...300 => 4.0 * ideal,
+            0..=100 => 10.0 * ideal,
+            101..=200 => 7.0 * ideal,
+            201..=300 => 4.0 * ideal,
             _ => 5.0 * ideal,
         };
 

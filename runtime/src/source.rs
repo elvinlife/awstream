@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 use tokio_core::reactor::Handle;
 use tokio_timer;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 type SourceCtrl = (UnboundedSender<AdaptAction>, UnboundedReceiver<Signal>);
 type SourceData = ReceiverCtl;
@@ -155,7 +156,9 @@ impl TimerSource {
 
                     let level = source.current_level();
                     let data_to_send = AsDatum::new(level, frame_num, vec![0; size]);
-                    info!("add new, level: {}, size: {}", level, size);
+                    // info!("add new, level: {}, size: {}", level, size);
+                    let send_ts = SystemTime::now().duration_since(UNIX_EPOCH).expect("").as_millis();
+                    info!("send frame frame_no: {} size: {} ts: {:?} level: {}", frame_num, size, send_ts, level);
                     counter_clone.fetch_add(data_to_send.net_len(), Ordering::SeqCst);
                     data_tx.send(data_to_send).map(|_| ()).map_err(|_| ())
                 }

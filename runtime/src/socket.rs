@@ -62,14 +62,14 @@ impl Sink for Socket {
         // after flushing it's *still* over 8KiB, then apply backpressure
         // (reject the send).
         if self.buffer.len() >= Socket::BACKPRESSURE_BOUNDARY {
-            try!(self.poll_complete());
+            self.poll_complete()?;
 
             if self.buffer.len() >= Socket::BACKPRESSURE_BOUNDARY {
                 return Ok(AsyncSink::NotReady(item));
             }
         }
 
-        try!(self.encoder.encode(item, &mut self.buffer));
+        self.encoder.encode(item, &mut self.buffer)?;
 
         Ok(AsyncSink::Ready)
     }
@@ -142,6 +142,7 @@ where
 
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         loop {
+            trace!("begin polling to read frames");
             // Repeatedly call `decode` or `decode_eof` as long as it is
             // "readable". Readable is defined as not having returned `None`. If
             // the upstream has returned EOF, and the decoder is no longer
@@ -149,13 +150,14 @@ where
             // readable again, at which point the stream is terminated.
             if self.is_readable {
                 if self.eof {
-                    let frame = try!(self.decoder.decode_eof(&mut self.buffer));
+                    let frame = self.decoder.decode_eof(&mut self.buffer)?;
+                    trace!("Successfully decode a frame");
                     return Ok(Async::Ready(frame));
                 }
 
                 trace!("attempting to decode a frame");
 
-                if let Some(frame) = try!(self.decoder.decode(&mut self.buffer)) {
+                if let Some(frame) = self.decoder.decode(&mut self.buffer)? {
                     trace!("frame decoded from buffer");
                     return Ok(Async::Ready(Some(frame)));
                 }
@@ -169,9 +171,12 @@ where
             // got room for at least one byte to read to ensure that we don't
             // get a spurious 0 that looks like EOF
             self.buffer.reserve(1);
+            trace!("before read_buf");
+            // if 0 == try_ready!(tokio_io::AsyncRead::read_buf(&mut self.inner, &mut self.buffer)) {
             if 0 == try_ready!(self.inner.read_buf(&mut self.buffer)) {
                 self.eof = true;
             }
+            trace!("after read_buf");
 
             self.is_readable = true;
         }

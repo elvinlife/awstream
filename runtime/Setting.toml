@@ -1,4 +1,4 @@
-server = "54.153.118.87"
+server = "127.0.0.1"
 port = 8889
 
 profile_path = "../data/reference-data/darknet.profile.csv"
